@@ -41,49 +41,58 @@ fn decode(bytes: &Vec<u8>) -> Vec<u8> {
 }
 
 fn main() -> Result<(), Error> {
-    let input_dir_name = "./decode_input";
-    let output_dir_name = "./decode_output";
+    let now = std::time::Instant::now();
+    let mut amount = 0;
 
     {
-        // check if input dir exists / is not empty
-        if !Path::new(input_dir_name).is_dir()
-            || PathBuf::from(input_dir_name).read_dir()?.next().is_none()
+        let input_dir_name = "./decode_input";
+        let output_dir_name = "./decode_output";
+
         {
-            if !Path::new(input_dir_name).is_dir() {
-                fs::create_dir(input_dir_name)?;
+            // check if input dir exists / is not empty
+            if !Path::new(input_dir_name).is_dir()
+                || PathBuf::from(input_dir_name).read_dir()?.next().is_none()
+            {
+                if !Path::new(input_dir_name).is_dir() {
+                    fs::create_dir(input_dir_name)?;
+                }
+
+                return Err(Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    format!("Input directory ({}) is empty", input_dir_name),
+                ));
             }
 
-            return Err(Error::new(
-                std::io::ErrorKind::InvalidInput,
-                format!("Input directory ({}) is empty", input_dir_name),
-            ));
+            if !Path::new(&output_dir_name).is_dir() {
+                fs::create_dir(&output_dir_name)?;
+            }
         }
 
-        if !Path::new(&output_dir_name).is_dir() {
-            fs::create_dir(&output_dir_name)?;
+        for path in fs::read_dir(&input_dir_name).unwrap() {
+            let input_path = path.unwrap().path();
+            if input_path.is_dir() || input_path.extension().unwrap() != "enc" {
+                continue;
+            }
+            println!("{:?}", input_path.as_os_str());
+
+            let bytes = fs::read(&input_path)?;
+
+            let decoded = decode(&bytes);
+
+            let mut output_path = PathBuf::from(output_dir_name);
+            output_path.push(input_path.file_stem().unwrap());
+
+            let mut file = fs::File::create(&output_path)?;
+            file.write_all(&decoded)?;
+
+            fs::set_permissions(output_path, fs::metadata(input_path)?.permissions())?;
+
+            amount += 1;
         }
     }
 
-    for path in fs::read_dir(&input_dir_name).unwrap() {
-        let input_path = path.unwrap().path();
-        if input_path.extension().unwrap() != "enc" {
-            continue;
-        }
-
-        let bytes = fs::read(&input_path)?;
-
-        let decoded = decode(&bytes);
-
-        let mut output_path = PathBuf::from(output_dir_name);
-        output_path.push(input_path.file_stem().unwrap());
-
-        let mut file = fs::File::create(&output_path)?;
-        file.write_all(&decoded)?;
-
-        let mut perms = fs::metadata(input_path)?.permissions();
-        perms.set_readonly(false);
-        fs::set_permissions(output_path, perms)?;
-    }
+    let elapsed = now.elapsed();
+    println!("Decoded {} files in {:.2?}", amount, elapsed);
 
     Ok(())
 }

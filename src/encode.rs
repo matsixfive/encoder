@@ -55,49 +55,61 @@ fn add_extension(path: &mut std::path::PathBuf, extension: impl AsRef<std::path:
 }
 
 fn main() -> Result<()> {
-    let input_dir_name = "./encode_input";
-    let output_dir_name = "./encode_output";
+    let now = std::time::Instant::now();
+    let mut amount = 0;
 
     {
-        // check if input dir exists / is not empty
-        if !Path::new(input_dir_name).is_dir()
-            || PathBuf::from(input_dir_name).read_dir()?.next().is_none()
+        let input_dir_name = "./encode_input";
+        let output_dir_name = "./encode_output";
+
         {
-            if !Path::new(input_dir_name).is_dir() {
-                fs::create_dir(input_dir_name)?;
+            // check if input dir exists / is not empty
+            if !Path::new(input_dir_name).is_dir()
+                || PathBuf::from(input_dir_name).read_dir()?.next().is_none()
+            {
+                if !Path::new(input_dir_name).is_dir() {
+                    fs::create_dir(input_dir_name)?;
+                }
+
+                return Err(Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    format!("Input directory ({}) is empty", input_dir_name),
+                ));
             }
 
-            return Err(Error::new(
-                std::io::ErrorKind::InvalidInput,
-                format!("Input directory ({}) is empty", input_dir_name),
-            ));
+            if !Path::new(&output_dir_name).is_dir() {
+                fs::create_dir(&output_dir_name)?;
+            }
         }
 
-        if !Path::new(&output_dir_name).is_dir() {
-            fs::create_dir(&output_dir_name)?;
+        let paths = fs::read_dir(&input_dir_name).unwrap();
+
+        for path in paths {
+            let input_path = path.unwrap().path();
+            if input_path.is_dir() {
+                continue;
+            }
+            println!("{:?}", input_path.as_os_str());
+
+            let bytes = fs::read(&input_path)?;
+
+            let encoded = encode(&bytes);
+
+            let mut output_path = PathBuf::from(output_dir_name);
+            output_path.push(input_path.file_name().unwrap());
+            add_extension(&mut output_path, "enc");
+
+            let mut file = fs::File::create(&output_path)?;
+            file.write_all(&encoded)?;
+
+            fs::set_permissions(output_path, fs::metadata(input_path)?.permissions())?;
+
+            amount += 1;
         }
     }
 
-    let paths = fs::read_dir(&input_dir_name).unwrap();
-
-    for path in paths {
-        let input_path = path.unwrap().path();
-
-        let bytes = fs::read(&input_path)?;
-
-        let encoded = encode(&bytes);
-
-        let mut output_path = PathBuf::from(output_dir_name);
-        output_path.push(input_path.file_name().unwrap());
-        add_extension(&mut output_path, "enc");
-
-        let mut file = fs::File::create(&output_path)?;
-        file.write_all(&encoded)?;
-
-        let mut perms = fs::metadata(input_path)?.permissions();
-        perms.set_readonly(true);
-        fs::set_permissions(output_path, perms)?;
-    }
+    let elapsed = now.elapsed();
+    println!("Encoded {} files in {:.2?}", amount, elapsed);
 
     Ok(())
 }

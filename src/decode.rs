@@ -77,8 +77,6 @@ fn main() -> Result<(), Error> {
         let mut output_path = PathBuf::from(output_dir_name);
         output_path.push(input_path.file_stem().unwrap());
 
-        println!("{:?} => {:?}", input_path.file_stem().unwrap(), output_path);
-
         let mut file = fs::File::create(&output_path)?;
         file.write_all(&decoded)?;
 

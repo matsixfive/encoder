@@ -1,1 +1,6 @@
 /target
+
+/encode_input
+/encode_output
+/decode_input
+/decode_output

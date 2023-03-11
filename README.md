@@ -23,6 +23,8 @@ Dowload the repo and use `cargo build --release` to build the project.
 
 ## Pros/Cons
 
-The only real situation where this does compress files is in files almost entirely made of large clusters (a byte or more) of the same bits e.g. a large black image, which is almost entirely useless.
+- The only real situation where this does compress files is in files almost entirely made of large clusters (a byte or more) of the same bits e.g. a large black image, which is almost entirely useless.
 
-Can be used to pseudo encrypt files, although there is nothing stopping anyone from decoding them if they figure out how they were encoded.
+- Can be used to pseudo encrypt files, although there is nothing stopping anyone from decoding them if they figure out how they were encoded.
+
+- Ignores directories (for now).

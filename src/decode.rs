@@ -64,6 +64,9 @@ fn main() -> Result<(), Error> {
 
     for path in fs::read_dir(&input_dir_name).unwrap() {
         let input_path = path.unwrap().path();
+        if input_path.extension().unwrap() != "enc" {
+            continue;
+        }
 
         let bytes = fs::read(&input_path)?;
 

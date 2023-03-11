@@ -88,7 +88,7 @@ fn main() -> Result<(), Error> {
 
         let mut output_path = PathBuf::from(&output_dir_name);
         output_path.push(input_path.file_name().unwrap());
-        add_extension(&mut output_path, "bin");
+        add_extension(&mut output_path, "enc");
 
         let mut file = fs::File::create(&output_path)?;
         file.write_all(&encoded)?;

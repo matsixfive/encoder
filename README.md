@@ -15,7 +15,7 @@ Run either one of the executables and it will create a directory for you to put 
 
 ### Release
 
-Download the latest release from the releases panel
+Download the latest release from the [releases](releases) panel
 
 ### Build from source
 

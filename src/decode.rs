@@ -44,22 +44,24 @@ fn main() -> Result<(), Error> {
     let input_dir_name = "./decode_input";
     let output_dir_name = "./decode_output";
 
-    // check if input dir exists / is not empty
-    if !Path::new(input_dir_name).is_dir()
-        || PathBuf::from(input_dir_name).read_dir()?.next().is_none()
     {
-        if !Path::new(input_dir_name).is_dir() {
-            fs::create_dir(input_dir_name)?;
+        // check if input dir exists / is not empty
+        if !Path::new(input_dir_name).is_dir()
+            || PathBuf::from(input_dir_name).read_dir()?.next().is_none()
+        {
+            if !Path::new(input_dir_name).is_dir() {
+                fs::create_dir(input_dir_name)?;
+            }
+
+            return Err(Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Input directory ({}) is empty", input_dir_name),
+            ));
         }
 
-        return Err(Error::new(
-            std::io::ErrorKind::InvalidInput,
-            format!("Input directory ({}) is empty", input_dir_name),
-        ));
-    }
-
-    if !Path::new(&output_dir_name).is_dir() {
-        fs::create_dir(&output_dir_name)?;
+        if !Path::new(&output_dir_name).is_dir() {
+            fs::create_dir(&output_dir_name)?;
+        }
     }
 
     for path in fs::read_dir(&input_dir_name).unwrap() {
@@ -72,13 +74,17 @@ fn main() -> Result<(), Error> {
 
         let decoded = decode(&bytes);
 
-        let mut output_path = PathBuf::from(&output_dir_name);
+        let mut output_path = PathBuf::from(output_dir_name);
         output_path.push(input_path.file_stem().unwrap());
 
         println!("{:?} => {:?}", input_path.file_stem().unwrap(), output_path);
 
-        let mut file = fs::File::create(output_path)?;
+        let mut file = fs::File::create(&output_path)?;
         file.write_all(&decoded)?;
+
+        let mut perms = fs::metadata(input_path)?.permissions();
+        perms.set_readonly(false);
+        fs::set_permissions(output_path, perms)?;
     }
 
     Ok(())

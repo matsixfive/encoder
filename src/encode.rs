@@ -1,6 +1,6 @@
 use std::{
     fs,
-    io::{Error, Write},
+    io::{Error, Result, Write},
     path::{Path, PathBuf},
 };
 
@@ -54,30 +54,31 @@ fn add_extension(path: &mut std::path::PathBuf, extension: impl AsRef<std::path:
     };
 }
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<()> {
     let input_dir_name = "./encode_input";
     let output_dir_name = "./encode_output";
 
-    // check if input dir exists / is not empty
-    if !Path::new(input_dir_name).is_dir()
-        || PathBuf::from(input_dir_name).read_dir()?.next().is_none()
     {
-        if !Path::new(input_dir_name).is_dir() {
-            fs::create_dir(input_dir_name)?;
+        // check if input dir exists / is not empty
+        if !Path::new(input_dir_name).is_dir()
+            || PathBuf::from(input_dir_name).read_dir()?.next().is_none()
+        {
+            if !Path::new(input_dir_name).is_dir() {
+                fs::create_dir(input_dir_name)?;
+            }
+
+            return Err(Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Input directory ({}) is empty", input_dir_name),
+            ));
         }
 
-        return Err(Error::new(
-            std::io::ErrorKind::InvalidInput,
-            format!("Input directory ({}) is empty", input_dir_name),
-        ));
-    }
-
-    if !Path::new(&output_dir_name).is_dir() {
-        fs::create_dir(&output_dir_name)?;
+        if !Path::new(&output_dir_name).is_dir() {
+            fs::create_dir(&output_dir_name)?;
+        }
     }
 
     let paths = fs::read_dir(&input_dir_name).unwrap();
-    //TODO: include metadata in encoded file to be transferred when decoded
 
     for path in paths {
         let input_path = path.unwrap().path();
@@ -86,12 +87,16 @@ fn main() -> Result<(), Error> {
 
         let encoded = encode(&bytes);
 
-        let mut output_path = PathBuf::from(&output_dir_name);
+        let mut output_path = PathBuf::from(output_dir_name);
         output_path.push(input_path.file_name().unwrap());
         add_extension(&mut output_path, "enc");
 
         let mut file = fs::File::create(&output_path)?;
         file.write_all(&encoded)?;
+
+        let mut perms = fs::metadata(input_path)?.permissions();
+        perms.set_readonly(true);
+        fs::set_permissions(output_path, perms)?;
     }
 
     Ok(())

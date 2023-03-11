@@ -11,7 +11,9 @@ e.g. `11111 000 1111111 00 1` would be encoded as `5, 3, 7, 2, 1`, using a byte 
 
 Run either one of the executables and it will create a directory for you to put the files you want to be encoded in.
 
-### Download from [release](https://github.com/matsixfive/encoder/releases)
+## Download
+
+### From [release](https://github.com/matsixfive/encoder/releases)
 
 Download the latest release from the [releases](https://github.com/matsixfive/encoder/releases/latest) panel.
 

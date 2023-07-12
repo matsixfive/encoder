@@ -1,6 +1,6 @@
 # File Encoder/Decoder
 
-This was originally meant to be a file compressor but rarely makes files smaller, just encodes/permutates them.
+This was originally meant to be a file compressor but rarely makes files smaller, just encodes them.
 
 ## How it works
 
@@ -28,3 +28,10 @@ Dowload the repo and use `cargo build --release` to build the project.
 - Can be used to pseudo encrypt files, although there is nothing stopping anyone from decoding them if they figure out how they were encoded.
 
 - Ignores directories (for now).
+
+# UPDATE:
+- This process is called [run-length encoding](https://en.wikipedia.org/wiki/Run-length_encoding)
+- Could use variable sized chunks using something like [Elias gamma coding](https://en.wikipedia.org/wiki/Elias_gamma_coding) whick uses `2 * floor(log_2(x)) + 1` bits per count `x` instead of fixed chunks (`2 * floor(chunk_size / x) - 1`)
+- Could be nice to have first bit in the result be the same as the first bit in the source instead of a constant `1`
+- Is sometimes useful e.g. in a screenshot with a large area of black / white
+- [Helpful stackoverflow answer](https://stackoverflow.com/a/7603969)
